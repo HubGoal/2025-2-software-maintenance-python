@@ -14,19 +14,29 @@ class TaskManager:
             try:
                 with open(self.file_name, "r") as file:
                     self.tasks = json.load(file)
-            except:
-                print("Error loading task data. Starting with empty task list.")
+            except Exception as e:
+                print(f"Error loading task data: {e}. Starting with empty task list.")
                 self.tasks = []
     
     def save_tasks(self):
-        with open(self.file_name, "w") as file:
-            json.dump(self.tasks, file, indent=4)
+        try:
+            with open(self.file_name, "w") as file:
+                json.dump(self.tasks, file, indent=4)
+        except Exception as e:
+            print(f"Error saving task data: {e}")
     
     def add_task(self, title, description):
+        if not title.strip():
+            print("Title cannot be empty.")
+            return
+        if not description.strip():
+            print("Description cannot be empty.")
+            return
+        
         task = {
             "id": str(uuid.uuid4()),
-            "title": title,
-            "description": description,
+            "title": title.strip(),
+            "description": description.strip(),
             "status": "Pending",
             "created_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
@@ -50,17 +60,28 @@ class TaskManager:
         print("=" * 100 + "\n")
     
     def mark_complete(self, task_id):
+        if not task_id.strip():
+            print("Task ID cannot be empty.")
+            return
+
         for task in self.tasks:
-            if task["id"].startswith(task_id):  
-                task["status"] = "Completed"
-                self.save_tasks()
-                print(f"Task '{task['title']}' marked as completed!")
+            if task["id"].startswith(task_id.strip()):
+                if task["status"] == "Completed":
+                    print(f"Task '{task['title']}' is already completed.")
+                else:
+                    task["status"] = "Completed"
+                    self.save_tasks()
+                    print(f"Task '{task['title']}' marked as completed!")
                 return
         print(f"Task with ID starting with '{task_id}' not found.")
     
     def delete_task(self, task_id):
+        if not task_id.strip():
+            print("Task ID cannot be empty.")
+            return
+
         for i, task in enumerate(self.tasks):
-            if task["id"].startswith(task_id):
+            if task["id"].startswith(task_id.strip()):
                 removed = self.tasks.pop(i)
                 self.save_tasks()
                 print(f"Task '{removed['title']}' deleted successfully!")
@@ -79,7 +100,11 @@ def main():
         print("4. Delete Task")
         print("5. Exit")
         
-        choice = input("Enter your choice (1-5): ")
+        choice = input("Enter your choice (1-5): ").strip()
+        
+        if choice not in {"1", "2", "3", "4", "5"}:
+            print("Invalid choice. Please enter a number from 1 to 5.")
+            continue
         
         if choice == "1":
             title = input("Enter task title: ")
@@ -100,9 +125,6 @@ def main():
         elif choice == "5":
             print("Exiting Task Manager. Goodbye!")
             break
-        
-        else:
-            print("Invalid choice. Please try again.")
 
 
 if __name__ == "__main__":
